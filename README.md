@@ -1,5 +1,7 @@
 # Script Engine
 
+ - [Documentation](http://godoc.org/github.com/tree-server/script-engine)
+
 This provides a smaller, simpler wrapper around the features of [Gopher Lua](http://github.com/yuin/gopher-lua).
 
 Usage of the ScriptEngine is a through a smaller more simple API than dealing with al the raw Lua states. This will make integrating Lua scripts with Go aspects of the softare much quicker.
