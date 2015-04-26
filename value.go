@@ -51,7 +51,7 @@ func (v *Value) AsFloat() float64 {
 }
 
 // AsNumber is an alias for AsFloat (Lua calls them "numbers")
-func (v *Value) AsNumber() (float64, error) {
+func (v *Value) AsNumber() float64 {
 	return v.AsFloat()
 }
 
@@ -222,7 +222,7 @@ func (v *Value) TableRemove(pos int) *Value {
 // The following provide LFunction methods on Value
 
 func (v *Value) FuncLocalName(regno, pc int) (string, bool) {
-	if f, ok := v.lval.(lua.LFunction); ok {
+	if f, ok := v.lval.(*lua.LFunction); ok {
 		return f.LocalName(regno, pc)
 	} else {
 		return "", false

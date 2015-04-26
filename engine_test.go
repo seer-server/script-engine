@@ -32,12 +32,7 @@ func TestCanCallMethod(t *testing.T) {
 		t.Errorf("Expected %d return values, but found %d instead", 1, len(ret))
 	}
 
-	n, err := ret[0].AsNumber()
-	if err != nil {
-		t.Error(err)
-
-		return
-	}
+	n := ret[0].AsNumber()
 
 	exp := float64(20)
 	if n != exp {
@@ -50,13 +45,7 @@ func TestCallingGoFromLua(t *testing.T) {
 	defer e.Close()
 
 	dbl := func(e *Engine) int {
-		n, err := e.PopArg().AsNumber()
-		if err != nil {
-			t.Error(err)
-
-			return 0
-		}
-
+		n := e.PopArg().AsNumber()
 		e.PushRet(LuaNumber(n * 2))
 
 		return 1
@@ -74,13 +63,8 @@ func TestCallingGoFromLua(t *testing.T) {
 
 		return
 	}
-	n, err := ret[0].AsNumber()
-	if err != nil {
-		t.Error(err)
 
-		return
-	}
-
+	n := ret[0].AsNumber()
 	exp := float64(20)
 	if n != exp {
 		t.Errorf("Expected return value of %f but found %f", exp, n)
