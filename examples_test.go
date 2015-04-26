@@ -1,5 +1,9 @@
 package engine
 
+import (
+	"fmt"
+)
+
 func ExampleEngine() {
 	e := NewEngine() // create a new engine
 	defer e.Close()  // make sure to close the engine
@@ -19,10 +23,16 @@ func ExampleEngine() {
 }
 
 func ExampleCall_simple() {
+	e := NewEngine()
+	defer e.Close()
+
 	e.Call("some_method", 0)
 }
 
 func ExampleCall_multiple_returns() {
+	e := NewEngine()
+	defer e.Close()
+
 	ret, _ := e.Call("swap_these_numbers", 2, LuaNumber(10), LuaNumber(20))
 
 	a, b := ret[0].AsNumber(), ret[1].AsNumber()
