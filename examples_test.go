@@ -22,14 +22,14 @@ func ExampleEngine() {
 	fmt.Println(n) // 20.0000000
 }
 
-func ExampleCall_simple() {
+func ExampleEngineCall_simple() {
 	e := NewEngine()
 	defer e.Close()
 
 	e.Call("some_method", 0)
 }
 
-func ExampleCall_multiple_returns() {
+func ExampleEngineCall_multiple_returns() {
 	e := NewEngine()
 	defer e.Close()
 
