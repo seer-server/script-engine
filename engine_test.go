@@ -70,3 +70,70 @@ func TestCallingGoFromLua(t *testing.T) {
 		t.Errorf("Expected return value of %f but found %f", exp, n)
 	}
 }
+
+func TestLoadingModules(t *testing.T) {
+	e := NewEngine()
+	defer e.Close()
+
+	e.RegisterModule("test_mod", loader)
+	err := e.LoadString(`
+		local test = require("test_mod")
+
+		function test_double(x)
+			return test.double(x)
+		end
+
+		function test_hello(name)
+			return test.hello(name)
+		end`)
+	if err != nil {
+		t.Error(err)
+	}
+
+	ret, err := e.Call("test_double", 1, LuaNumber(10))
+	if err != nil {
+		t.Error(0)
+	}
+
+	n := ret[0].AsNumber()
+	exp := float64(20)
+	if n != exp {
+		t.Errorf("Expected return value %f got %f", exp, n)
+	}
+
+	ret, err = e.Call("test_hello", 1, LuaString("World"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	s := ret[0].AsString()
+	expStr := "Hello, World!"
+	if s != expStr {
+		t.Errorf("Expected return value of %q but got %q", expStr, s)
+	}
+}
+
+// Code for testing loading module
+
+func loader(e *Engine) *Value {
+	return e.GenerateModule(fnMap)
+}
+
+var fnMap = ScriptFnMap{
+	"double": double,
+	"hello":  hello,
+}
+
+func double(e *Engine) int {
+	x := e.PopArg().AsNumber()
+	e.PushRet(LuaNumber(x * 2))
+
+	return 1
+}
+
+func hello(e *Engine) int {
+	name := e.PopArg().AsString()
+	e.PushRet(LuaString("Hello, " + name + "!"))
+
+	return 1
+}

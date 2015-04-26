@@ -147,66 +147,6 @@ func (v *Value) TableNext(key *Value) (*Value, *Value) {
 	return LuaNil(), LuaNil()
 }
 
-// TableRawGet maps to lua.LTable.RawGet
-func (v *Value) TableRawGet(key *Value) *Value {
-	if v.isTable() {
-		t := v.asTable()
-		ret := t.RawGet(key.lval)
-
-		return newValue(ret)
-	}
-
-	return LuaNil()
-}
-
-// TableRawGetH maps to lua.LTable.RawGetH
-func (v *Value) TableRawGetH(key *Value) *Value {
-	if v.isTable() {
-		t := v.asTable()
-		ret := t.RawGetH(key.lval)
-
-		return newValue(ret)
-	}
-
-	return LuaNil()
-}
-
-// TableRawGetInt maps to lua.LTable.RawGetInt
-func (v *Value) TableRawGetInt(key int) *Value {
-	if v.isTable() {
-		t := v.asTable()
-		ret := t.RawGetInt(key)
-
-		return newValue(ret)
-	}
-
-	return LuaNil()
-}
-
-// TableRawSet maps to lua.LTable.RawSet
-func (v *Value) TableRawSet(key *Value, value *Value) {
-	if v.isTable() {
-		t := v.asTable()
-		t.RawSet(key.lval, value.lval)
-	}
-}
-
-// TableRawSetH maps to lua.LTable.RawSetH
-func (v *Value) TableRawSetH(key *Value, value *Value) {
-	if v.isTable() {
-		t := v.asTable()
-		t.RawSetH(key.lval, value.lval)
-	}
-}
-
-// TableRawSetInt maps to lua.LTable.RawSetInt
-func (v *Value) TableRawSetInt(key int, value *Value) {
-	if v.isTable() {
-		t := v.asTable()
-		t.RawSetInt(key, value.lval)
-	}
-}
-
 // TableRemove maps to lua.LTable.Remove
 func (v *Value) TableRemove(pos int) *Value {
 	if v.isTable() {

@@ -13,6 +13,9 @@ type Engine struct {
 // returns an int.
 type ScriptFunction func(*Engine) int
 
+// ScriptFnMap is a type alias for map[string]ScriptFunction
+type ScriptFnMap map[string]ScriptFunction
+
 // Create a new engine containing a new lua.LState.
 func NewEngine() *Engine {
 	return &Engine{
@@ -36,14 +39,47 @@ func (e *Engine) LoadString(src string) error {
 }
 
 // SetVal allows for setting global variables in the loaded code.
-func (e *Engine) SetVal(name string, val *Value) {
+func (e *Engine) SetGlobal(name string, val *Value) {
 	e.state.SetGlobal(name, val.lval)
+}
+
+// SetField applies the value to the given table associated with the given
+// key.
+func (e *Engine) SetField(tbl *Value, key string, v *Value) {
+	e.state.SetField(tbl.lval, key, v.lval)
 }
 
 // RegisterFunc registers a Go function (ScriptFunction) with the script.
 // Using this method makes Go functions accessible through Lua scripts.
 func (e *Engine) RegisterFunc(name string, fn ScriptFunction) {
 	e.state.SetGlobal(name, e.genScriptFunc(fn))
+}
+
+// RegisterModule registers a Go module with the Engine for use within Lua.
+func (e *Engine) RegisterModule(name string, loadFn func(*Engine) *Value) {
+	loader := func(l *lua.LState) int {
+		e := &Engine{l}
+		mod := loadFn(e)
+		e.PushRet(mod)
+
+		return 1
+	}
+
+	e.state.PreloadModule(name, loader)
+}
+
+// GenerateModule returns a table that has been loaded with the given script
+// function map.
+func (e *Engine) GenerateModule(fnMap ScriptFnMap) *Value {
+	tbl := e.state.NewTable()
+	realFnMap := make(map[string]lua.LGFunction)
+	for k, fn := range fnMap {
+		realFnMap[k] = e.wrapScriptFunction(fn)
+	}
+
+	mod := e.state.SetFuncs(tbl, realFnMap)
+
+	return newValue(mod)
 }
 
 // PopArg returns the top value on the Lua stack.
@@ -98,14 +134,17 @@ func (e *Engine) LuaTable() *Value {
 	return newValue(e.state.NewTable())
 }
 
-// genScriptFunc will wrap a ScriptFunction with a function that gopher-lua
-// expects to see when calling method from Lua.
-func (e *Engine) genScriptFunc(fn ScriptFunction) lua.LValue {
-	sfn := func(l *lua.LState) int {
+// wrapScriptFunction turns a ScriptFunction into a lua.LGFunction
+func (e *Engine) wrapScriptFunction(fn ScriptFunction) lua.LGFunction {
+	return func(l *lua.LState) int {
 		e := &Engine{state: l}
 
 		return fn(e)
 	}
+}
 
-	return e.state.NewFunction(sfn)
+// genScriptFunc will wrap a ScriptFunction with a function that gopher-lua
+// expects to see when calling method from Lua.
+func (e *Engine) genScriptFunc(fn ScriptFunction) *lua.LFunction {
+	return e.state.NewFunction(e.wrapScriptFunction(fn))
 }
