@@ -40,6 +40,31 @@ func TestCanCallMethod(t *testing.T) {
 	}
 }
 
+func TestCanLoadFromFile(t *testing.T) {
+	e := NewEngine()
+	defer e.Close()
+
+	err := e.LoadFile("lua_test.lua")
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	ret, err := e.Call("give_me_one", 1)
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	n := ret[0].AsNumber()
+	exp := float64(1)
+	if n != exp {
+		t.Errorf("Expected return value of %f but got %f", exp, n)
+	}
+}
+
 func TestCallingGoFromLua(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
@@ -88,28 +113,38 @@ func TestLoadingModules(t *testing.T) {
 		end`)
 	if err != nil {
 		t.Error(err)
+
+		return
 	}
 
 	ret, err := e.Call("test_double", 1, LuaNumber(10))
 	if err != nil {
-		t.Error(0)
+		t.Error(err)
+
+		return
 	}
 
 	n := ret[0].AsNumber()
 	exp := float64(20)
 	if n != exp {
 		t.Errorf("Expected return value %f got %f", exp, n)
+
+		return
 	}
 
 	ret, err = e.Call("test_hello", 1, LuaString("World"))
 	if err != nil {
 		t.Error(err)
+
+		return
 	}
 
 	s := ret[0].AsString()
 	expStr := "Hello, World!"
 	if s != expStr {
 		t.Errorf("Expected return value of %q but got %q", expStr, s)
+
+		return
 	}
 }
 
