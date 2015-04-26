@@ -66,10 +66,23 @@ func ExampleEngine_RegisterModule() {
 	defer e.Close()
 
 	e.RegisterModule("example", loader)
-	e.LoadScript(`
+	e.LoadString(`
 		local e = require("example")
 
 		e.double(10) -- 20
 		e.swap(1, 2) -- 2, 1
 	`)
+}
+
+func ExampleEngine_RegisterFunc() {
+	e := NewEngine()
+	defer e.Close()
+
+	e.RegisterFunc("double", func(e *Engine) int {
+		n := e.PopArg().AsNumber()
+		e.PushRet(LuaNumber(e * 2))
+
+		return 1
+	})
+	e.LoadString("double(10) -- 20")
 }
