@@ -80,7 +80,7 @@ func ExampleEngine_RegisterFunc() {
 
 	e.RegisterFunc("double", func(e *Engine) int {
 		n := e.PopArg().AsNumber()
-		e.PushRet(LuaNumber(e * 2))
+		e.PushRet(LuaNumber(n * 2))
 
 		return 1
 	})
