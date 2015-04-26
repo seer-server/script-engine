@@ -39,3 +39,37 @@ func ExampleEngine_Call_multiple() {
 	fmt.Println(a) // 20.0000000
 	fmt.Println(b) // 10.0000000
 }
+
+func ExampleEngine_RegisterModule() {
+	fnMap := ScriptFnMap{
+		"double": func(e *Engine) int {
+			i := e.PopArg().AsNumber()
+			e.PushRet(LuaNumber(i * 2))
+
+			return 1
+		},
+		"swap": func(e *Engine) int {
+			a := e.PopArg()
+			b := e.PopArg()
+			e.PushRet(b)
+			e.PushRet(a)
+
+			return 2
+		},
+	}
+
+	loader := func(e *Engine) *Value {
+		return e.GenerateModule(fnMap)
+	}
+
+	e := NewEngine()
+	defer e.Close()
+
+	e.RegisterModule("example", loader)
+	e.LoadScript(`
+		local e = require("example")
+
+		e.double(10) -- 20
+		e.swap(1, 2) -- 2, 1
+	`)
+}
