@@ -15,13 +15,16 @@ defer eng.Close()
 eng.LoadScript(`
   function double(x)
     return x * 2
-  end`)
+  end
+`)
 // Call returns a slice of *Value, LuaNumber converts a number to 
 // the appropriate type to be treated as a number in the 
 // script
 ret, _ := eng.Call("double", 1, LuaNumber(10))
-// AsNumber() converts a *Value into a float64 or returns an error
-f, _ := ret[0].AsNumber()
+// AsNumber() converts a *Value into a float64, this method always succeeds
+// which means you should know that a number was returned. This "always 
+// succeeds" mentatility stems from Lua's loose type system.
+f := ret[0].AsNumber()
 fmt.Println(f) // => 20.0000000
 ```
 
@@ -32,16 +35,17 @@ eng := engine.NewEngine()
 defer eng.Close()
 eng.RegisterFunction("double", func(e *Engine) int {
         f, _ := e.PopArg().AsNumber()
-        e.PushRet(n * 2)
+        e.PushRet(LuaNumber(n * 2))
 
         return 1
 })
 eng.LoadScript(`
   function test(x)
     return double(x)
-  end`)
+  end
+`)
 ret, _ := eng.Call("test", 1, LuaNumber(10))
-f, _ := ret[0].AsNumber()
+f := ret[0].AsNumber()
 fmt.Println(f) // => 20.0000000
 ```
 
