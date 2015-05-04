@@ -66,10 +66,42 @@ func (v *Value) IsNil() bool {
 	return v.lval.Type() == lua.LTNil
 }
 
-// IsFalase is similar to AsBool except it returns if the Lua value would be
+// IsFalse is similar to AsBool except it returns if the Lua value would be
 // considered false in Lua.
 func (v *Value) IsFalse() bool {
 	return lua.LVIsFalse(v.lval)
+}
+
+// IsTrue returns whether or not this is a truthy value or not.
+func (v *Value) IsTrue() bool {
+	return !v.IsFalse()
+}
+
+// The following methods allow for type detection
+
+// IsNumber returns true if the stored value is a numeric value.
+func (v *Value) IsNumber() bool {
+	return v.lval.Type() == lua.LTNumber
+}
+
+// IsBool returns true if the stored value is a boolean value.
+func (v *Value) IsBool() bool {
+	return v.lval.Type() == lua.LTBool
+}
+
+// IsFunction returns true if the stored value is a function.
+func (v *Value) IsFunction() bool {
+	return v.lval.Type() == lua.LTFunction
+}
+
+// IsString returns true if the stored value is a string.
+func (v *Value) IsString() bool {
+	return v.lval.Type() == lua.LTString
+}
+
+// IsTable returns true if the stored value is a table.
+func (v *Value) IsTable() bool {
+	return v.lval.Type() == lua.LTTable
 }
 
 // The following methods allow LTable values to be modified through Go.
