@@ -1,6 +1,4 @@
-# Script Engine
-
- - [Documentation](http://godoc.org/github.com/tree-server/script-engine)
+# Script Engine [![GoDoc](http://godoc.org/github.com/tree-server/script-engine?status.svg)](http://godoc.org/github.com/tree-server/script-engine)
 
 This provides a smaller, simpler wrapper around the features of [Gopher Lua](http://github.com/yuin/gopher-lua).
 
