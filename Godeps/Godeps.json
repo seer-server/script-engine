@@ -1,7 +1,11 @@
 {
-	"ImportPath": "github.com/tree-server/script-engine",
+	"ImportPath": "github.com/seer-server/script-engine",
 	"GoVersion": "go1.4.2",
 	"Deps": [
+		{
+			"ImportPath": "github.com/layeh/gopher-luar",
+			"Rev": "10ee3f699e52abee2208358edec5573e917f8a12"
+		},
 		{
 			"ImportPath": "github.com/yuin/gopher-lua",
 			"Rev": "a973e18b86e1038a6063c0bd0866ff2c120b3728"

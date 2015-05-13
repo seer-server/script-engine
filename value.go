@@ -1,9 +1,9 @@
 package engine
 
 import (
-	"github.com/yuin/gopher-lua"
-
 	"fmt"
+
+	"github.com/yuin/gopher-lua"
 )
 
 // Provides information about failed Value typecasts.
@@ -118,8 +118,20 @@ func (v *Value) asTable() (t *lua.LTable) {
 	return
 }
 
+// isUserData returns a bool if the Value is an LUserData
+func (v *Value) isUserData() bool {
+	return v.lval.Type() == lua.LTUserData
+}
+
+// asUserData converts the Value into an LUserData
+func (v *Value) asUserData() (t *lua.LUserData) {
+	t, _ = v.lval.(*lua.LUserData)
+
+	return
+}
+
 // TableAppend maps to lua.LTable.Append
-func (v *Value) TableAppend(value *Value) {
+func (v *Value) Append(value *Value) {
 	if v.isTable() {
 		t := v.asTable()
 		t.Append(value.lval)
@@ -127,7 +139,7 @@ func (v *Value) TableAppend(value *Value) {
 }
 
 // TableForEach maps to lua.LTable.ForEach
-func (v *Value) TableForEach(cb func(*Value, *Value)) {
+func (v *Value) ForEach(cb func(*Value, *Value)) {
 	if v.isTable() {
 		actualCb := func(key lua.LValue, val lua.LValue) {
 			cb(newValue(key), newValue(val))
@@ -138,7 +150,7 @@ func (v *Value) TableForEach(cb func(*Value, *Value)) {
 }
 
 // TableInsert maps to lua.LTable.Insert
-func (v *Value) TableInsert(i int, value *Value) {
+func (v *Value) Insert(i int, value *Value) {
 	if v.isTable() {
 		t := v.asTable()
 		t.Insert(i, value.lval)
@@ -146,7 +158,7 @@ func (v *Value) TableInsert(i int, value *Value) {
 }
 
 // TableLen maps to lua.LTable.Len
-func (v *Value) TableLen() int {
+func (v *Value) Len() int {
 	if v.isTable() {
 		t := v.asTable()
 
@@ -157,7 +169,7 @@ func (v *Value) TableLen() int {
 }
 
 // TableMaxN maps to lua.LTable.MaxN
-func (v *Value) TableMaxN() int {
+func (v *Value) MaxN() int {
 	if v.isTable() {
 		t := v.asTable()
 
@@ -168,7 +180,7 @@ func (v *Value) TableMaxN() int {
 }
 
 // TableNext maps to lua.LTable.Next
-func (v *Value) TableNext(key *Value) (*Value, *Value) {
+func (v *Value) Next(key *Value) (*Value, *Value) {
 	if v.isTable() {
 		t := v.asTable()
 		v1, v2 := t.Next(key.lval)
@@ -180,7 +192,7 @@ func (v *Value) TableNext(key *Value) (*Value, *Value) {
 }
 
 // TableRemove maps to lua.LTable.Remove
-func (v *Value) TableRemove(pos int) *Value {
+func (v *Value) Remove(pos int) *Value {
 	if v.isTable() {
 		t := v.asTable()
 		ret := t.Remove(pos)
@@ -191,8 +203,21 @@ func (v *Value) TableRemove(pos int) *Value {
 	return LuaNil()
 }
 
+// Interface returns the value of the LUserData
+func (v *Value) Interface() interface{} {
+	if v.isUserData() {
+		t := v.asUserData()
+
+		return t.Value
+	}
+
+	return nil
+}
+
 // The following provide LFunction methods on Value
 
+// FuncLocalName is a function that returns the local name of a LFunction type
+// if this Value objects holds an LFunction.
 func (v *Value) FuncLocalName(regno, pc int) (string, bool) {
 	if f, ok := v.lval.(*lua.LFunction); ok {
 		return f.LocalName(regno, pc)

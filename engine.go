@@ -2,7 +2,10 @@
 
 package engine
 
-import "github.com/yuin/gopher-lua"
+import (
+	"github.com/layeh/gopher-luar"
+	"github.com/yuin/gopher-lua"
+)
 
 // Engine struct stores a pointer to a lua.LState providing a simplified API.
 type Engine struct {
@@ -39,13 +42,16 @@ func (e *Engine) LoadString(src string) error {
 }
 
 // SetVal allows for setting global variables in the loaded code.
-func (e *Engine) SetGlobal(name string, val *Value) {
-	e.state.SetGlobal(name, val.lval)
+func (e *Engine) SetGlobal(name string, val interface{}) {
+	v := e.ValueFor(val)
+
+	e.state.SetGlobal(name, v.lval)
 }
 
 // SetField applies the value to the given table associated with the given
 // key.
-func (e *Engine) SetField(tbl *Value, key string, v *Value) {
+func (e *Engine) SetField(tbl *Value, key string, val interface{}) {
+	v := e.ValueFor(val)
 	e.state.SetField(tbl.lval, key, v.lval)
 }
 
@@ -96,17 +102,81 @@ func (e *Engine) PopArg() *Value {
 // PushRet pushes the given Value onto the Lua stack.
 // Use this method when 'returning' values from a Go function called from a
 // Lua script.
-func (e *Engine) PushRet(v *Value) {
+func (e *Engine) PushRet(val interface{}) {
+	v := e.ValueFor(val)
 	e.state.Push(v.lval)
+}
+
+// PopBool returns the top of the stack as an actual Go bool.
+func (e *Engine) PopBool() bool {
+	v := e.PopArg()
+
+	return v.AsBool()
+}
+
+// PopFunction is an alias for PopArg, provided for readability when specifying
+// the desired value from the top of the stack.
+func (e *Engine) PopFunction() *Value {
+	return e.PopArg()
+}
+
+// PopInt returns the top of the stack as an actual Go int.
+func (e *Engine) PopInt() int {
+	v := e.PopArg()
+	i := int(v.AsNumber())
+
+	return i
+}
+
+// PopInt64 returns the top of the stack as an actual Go int64.
+func (e *Engine) PopInt64() int64 {
+	v := e.PopArg()
+	i := int64(v.AsNumber())
+
+	return i
+}
+
+// PopFloat returns the top of the stack as an actual Go float.
+func (e *Engine) PopFloat() float64 {
+	v := e.PopArg()
+
+	return v.AsFloat()
+}
+
+// PopNumber is an alias for PopArg, provided for readability when specifying
+// the desired value from the top of the stack.
+func (e *Engine) PopNumber() *Value {
+	return e.PopArg()
+}
+
+// PopString returns the top of the stack as an actual Go string value.
+func (e *Engine) PopString() string {
+	v := e.PopArg()
+
+	return v.AsString()
+}
+
+// PopTable is an alias for PopArg, provided for readability when specifying
+// the desired value from the top of the stack.
+func (e *Engine) PopTable() *Value {
+	return e.PopArg()
+}
+
+// PopInterface returns the top of the stack as an actual Go interface.
+func (e *Engine) PopInterface() interface{} {
+	v := e.PopArg()
+
+	return v.Interface()
 }
 
 // Call allows for calling a method by name.
 // The second parameter is the number of return values the function being
 // called should return. These values will be returned in a slice of Value
 // pointers.
-func (e *Engine) Call(name string, retCount int, params ...*Value) ([]*Value, error) {
+func (e *Engine) Call(name string, retCount int, params ...interface{}) ([]*Value, error) {
 	luaParams := make([]lua.LValue, len(params))
-	for i, v := range params {
+	for i, iface := range params {
+		v := e.ValueFor(iface)
 		luaParams[i] = v.lval
 	}
 
@@ -127,6 +197,22 @@ func (e *Engine) Call(name string, retCount int, params ...*Value) ([]*Value, er
 	e.state.Pop(retCount)
 
 	return retVals, nil
+}
+
+// DefineType creates a construtor with the given name that will generate the
+// given type.
+func (e *Engine) DefineType(name string, val interface{}) {
+	cons := luar.NewType(e.state, val)
+	e.state.SetGlobal(name, cons)
+}
+
+// ValueFor takes a Go type and creates a lua equivalent Value for it.
+func (e *Engine) ValueFor(val interface{}) *Value {
+	if v, ok := val.(*Value); ok {
+		return v
+	} else {
+		return newValue(luar.New(e.state, val))
+	}
 }
 
 // LuaTable creates and returns a new LuaTable.

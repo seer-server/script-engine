@@ -7,7 +7,7 @@ import (
 func TestLoadStringDoesNotFail(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
-	if err := e.LoadString("print(\"Hello\")"); err != nil {
+	if err := e.LoadString("local a = 1"); err != nil {
 		t.Error(e)
 	}
 }
@@ -100,6 +100,25 @@ func TestLoadingModules(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 
+	fnMap := ScriptFnMap{
+		"double": func(e *Engine) int {
+			x := e.PopArg().AsNumber()
+			e.PushRet(LuaNumber(x * 2))
+
+			return 1
+		},
+		"hello": func(e *Engine) int {
+			name := e.PopArg().AsString()
+			e.PushRet(LuaString("Hello, " + name + "!"))
+
+			return 1
+		},
+	}
+
+	loader := func(e *Engine) *Value {
+		return e.GenerateModule(fnMap)
+	}
+
 	e.RegisterModule("test_mod", loader)
 	err := e.LoadString(`
 		local test = require("test_mod")
@@ -148,27 +167,90 @@ func TestLoadingModules(t *testing.T) {
 	}
 }
 
-// Code for testing loading module
+func TestEngineValueFor(t *testing.T) {
+	e := NewEngine()
+	sexp := "This is a String"
+	sval := e.ValueFor(sexp)
+	if sexp != sval.AsString() {
+		t.Errorf("Expected %q but got %q", sexp, sval.AsString())
 
-func loader(e *Engine) *Value {
-	return e.GenerateModule(fnMap)
+		return
+	}
+
+	var nexp float64 = 10.0
+	nval := e.ValueFor(nexp)
+	if nexp != nval.AsNumber() {
+		t.Errorf("Expected %f but got %f", nexp, nval.AsNumber())
+
+		return
+	}
+
+	bexp := true
+	bval := e.ValueFor(bexp)
+	if bexp != bval.AsBool() {
+		t.Errorf("Expected true, found %b", bval.AsBool())
+
+		return
+	}
+
+	empty := e.ValueFor(nil)
+	if !empty.IsNil() {
+		t.Error("Expected nil, but it wasn't")
+
+		return
+	}
+
+	osval := e.ValueFor(sval)
+	if osval != sval {
+		t.Error("Expected given value pointer to be returned, but it wasn't.")
+
+		return
+	}
 }
 
-var fnMap = ScriptFnMap{
-	"double": double,
-	"hello":  hello,
-}
+func TestTypeConstructor(t *testing.T) {
+	type Song struct {
+		Title, Artist string
+	}
 
-func double(e *Engine) int {
-	x := e.PopArg().AsNumber()
-	e.PushRet(LuaNumber(x * 2))
+	e := NewEngine()
+	e.DefineType("Song", Song{})
+	e.LoadString(`
+		local s = Song()
+	    s.Title = "Some Song Name"
+	    s.Artist = "Some Awesome Artist"
 
-	return 1
-}
+		function test_song()
+		  return s.Title .. " - " .. s.Artist
+		end
 
-func hello(e *Engine) int {
-	name := e.PopArg().AsString()
-	e.PushRet(LuaString("Hello, " + name + "!"))
+		function get_song()
+		  return s
+		end`)
+	ret, err := e.Call("test_song", 1)
+	if err != nil {
+		t.Error(err)
 
-	return 1
+		return
+	}
+
+	s := ret[0].AsString()
+	exp := "Some Song Name - Some Awesome Artist"
+	if s != exp {
+		t.Errorf("Expected %q but returned %q", exp, s)
+	}
+
+	ret, err = e.Call("get_song", 1)
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	iface := ret[0].Interface()
+	if _, ok := ret[0].Interface().(*Song); !ok {
+		t.Errorf("Expected a Song, but received %T (%v)", iface, iface)
+
+		return
+	}
 }
