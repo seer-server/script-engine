@@ -55,10 +55,17 @@ func (e *Engine) SetField(tbl *Value, key string, val interface{}) {
 	e.state.SetField(tbl.lval, key, v.lval)
 }
 
-// RegisterFunc registers a Go function (ScriptFunction) with the script.
-// Using this method makes Go functions accessible through Lua scripts.
-func (e *Engine) RegisterFunc(name string, fn ScriptFunction) {
-	e.state.SetGlobal(name, e.genScriptFunc(fn))
+// RegisterFunc registers a Go function with the script. Using this method makes
+// Go functions accessible through Lua scripts.
+func (e *Engine) RegisterFunc(name string, fn interface{}) {
+	var lfn lua.LValue
+	if sf, ok := fn.(func(*Engine) int); ok {
+		lfn = e.genScriptFunc(sf)
+	} else {
+		v := e.ValueFor(fn)
+		lfn = v.lval
+	}
+	e.state.SetGlobal(name, lfn)
 }
 
 // RegisterModule registers a Go module with the Engine for use within Lua.

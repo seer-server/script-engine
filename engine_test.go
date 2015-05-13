@@ -80,11 +80,11 @@ func TestCallingGoFromLua(t *testing.T) {
 
 	e.LoadString(`
 		function test(x)
-			return double(x)
+		  return double(x)
 		end`)
 	ret, err := e.Call("test", 1, LuaNumber(10))
 	if err != nil {
-		t.Error(e)
+		t.Error(err)
 
 		return
 	}
@@ -100,23 +100,21 @@ func TestLoadingModules(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 
-	fnMap := ScriptFnMap{
-		"double": func(e *Engine) int {
-			x := e.PopArg().AsNumber()
-			e.PushRet(LuaNumber(x * 2))
-
-			return 1
-		},
-		"hello": func(e *Engine) int {
-			name := e.PopArg().AsString()
-			e.PushRet(LuaString("Hello, " + name + "!"))
-
-			return 1
-		},
-	}
-
 	loader := func(e *Engine) *Value {
-		return e.GenerateModule(fnMap)
+		return e.GenerateModule(ScriptFnMap{
+			"double": func(e *Engine) int {
+				x := e.PopArg().AsNumber()
+				e.PushRet(LuaNumber(x * 2))
+
+				return 1
+			},
+			"hello": func(e *Engine) int {
+				name := e.PopArg().AsString()
+				e.PushRet(LuaString("Hello, " + name + "!"))
+
+				return 1
+			},
+		})
 	}
 
 	e.RegisterModule("test_mod", loader)
@@ -169,6 +167,7 @@ func TestLoadingModules(t *testing.T) {
 
 func TestEngineValueFor(t *testing.T) {
 	e := NewEngine()
+	defer e.Close()
 	sexp := "This is a String"
 	sval := e.ValueFor(sexp)
 	if sexp != sval.AsString() {
@@ -209,11 +208,8 @@ func TestEngineValueFor(t *testing.T) {
 }
 
 func TestTypeConstructor(t *testing.T) {
-	type Song struct {
-		Title, Artist string
-	}
-
 	e := NewEngine()
+	defer e.Close()
 	e.DefineType("Song", Song{})
 	e.LoadString(`
 		local s = Song()
@@ -253,4 +249,65 @@ func TestTypeConstructor(t *testing.T) {
 
 		return
 	}
+}
+
+func TestNonScriptFunctionsPassedToLua(t *testing.T) {
+	e := NewEngine()
+	defer e.Close()
+	e.RegisterFunc("add", func(x, y int) int {
+		return x + y
+	})
+
+	e.LoadString(`
+		function call_add(a, b)
+		  return add(a, b)
+		end`)
+	ret, err := e.Call("call_add", 1, 10, 20)
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	n := ret[0].AsNumber()
+	exp := float64(10 + 20)
+	if n != exp {
+		t.Errorf("Expected %f but got %f", exp, n)
+	}
+}
+
+func TestStructFunctions(t *testing.T) {
+	e := NewEngine()
+	defer e.Close()
+	e.DefineType("Song", Song{})
+	e.LoadString(`
+		function call_string(s)
+		  local s = Song()
+		  s.Title = "One"
+		  s.Artist = "Two"
+
+		  return s:string()
+		end`)
+	ret, err := e.Call("call_string", 1)
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	exp := "One - Two"
+	s := ret[0].AsString()
+	if s != exp {
+		t.Errorf("Expected %q but got %q", exp, s)
+	}
+}
+
+// Helper definitions
+
+type Song struct {
+	Title, Artist string
+}
+
+func (s Song) String() string {
+	return s.Title + " - " + s.Artist
 }

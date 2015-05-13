@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math"
 )
 
 func ExampleEngine() {
@@ -33,7 +34,7 @@ func ExampleEngine_Call_multiple() {
 	e := NewEngine()
 	defer e.Close()
 
-	ret, _ := e.Call("swap_these_numbers", 2, LuaNumber(10), LuaNumber(20))
+	ret, _ := e.Call("swap_these_numbers", 2, 10, 20)
 
 	a, b := ret[0].AsNumber(), ret[1].AsNumber()
 	fmt.Println(a) // 20.0000000
@@ -78,11 +79,18 @@ func ExampleEngine_RegisterFunc() {
 	e := NewEngine()
 	defer e.Close()
 
+	// Add script functions
 	e.RegisterFunc("double", func(e *Engine) int {
-		n := e.PopArg().AsNumber()
-		e.PushRet(LuaNumber(n * 2))
+		n := e.PopFloat()
+		e.PushRet(n * 2)
 
 		return 1
 	})
 	e.LoadString("double(10) -- 20")
+
+	// Or add standard Go functions, all stack communication done for you
+	e.RegisterFunc("power", func(x, y float64) float64 {
+		return math.Pow(x, y)
+	})
+	e.LoadString("power(2, 2) -- 4")
 }
