@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestLoadStringDoesNotFail(t *testing.T) {
+func Test_LoadStringDoesNotFail(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 	if err := e.LoadString("local a = 1"); err != nil {
@@ -12,7 +12,7 @@ func TestLoadStringDoesNotFail(t *testing.T) {
 	}
 }
 
-func TestCanCallMethod(t *testing.T) {
+func Test_CanCallMethod(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 
@@ -40,7 +40,7 @@ func TestCanCallMethod(t *testing.T) {
 	}
 }
 
-func TestCanLoadFromFile(t *testing.T) {
+func Test_CanLoadFromFile(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 
@@ -65,7 +65,7 @@ func TestCanLoadFromFile(t *testing.T) {
 	}
 }
 
-func TestCallingGoFromLua(t *testing.T) {
+func Test_CallingGoFromLua(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 
@@ -96,7 +96,7 @@ func TestCallingGoFromLua(t *testing.T) {
 	}
 }
 
-func TestLoadingModules(t *testing.T) {
+func Test_LoadingModules(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 
@@ -165,7 +165,7 @@ func TestLoadingModules(t *testing.T) {
 	}
 }
 
-func TestEngineValueFor(t *testing.T) {
+func Test_EngineValueFor(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 	sexp := "This is a String"
@@ -207,7 +207,7 @@ func TestEngineValueFor(t *testing.T) {
 	}
 }
 
-func TestTypeConstructor(t *testing.T) {
+func Test_TypeConstructor(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 	e.DefineType("Song", Song{})
@@ -251,7 +251,7 @@ func TestTypeConstructor(t *testing.T) {
 	}
 }
 
-func TestNonScriptFunctionsPassedToLua(t *testing.T) {
+func Test_NonScriptFunctionsPassedToLua(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 	e.RegisterFunc("add", func(x, y int) int {
@@ -276,7 +276,7 @@ func TestNonScriptFunctionsPassedToLua(t *testing.T) {
 	}
 }
 
-func TestStructFunctions(t *testing.T) {
+func Test_StructFunctions(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 	e.DefineType("Song", Song{})
