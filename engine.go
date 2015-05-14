@@ -48,6 +48,13 @@ func (e *Engine) SetGlobal(name string, val interface{}) {
 	e.state.SetGlobal(name, v.lval)
 }
 
+// GetGlobal returns the value associated with the given name, or LuaNil
+func (e *Engine) GetGlobal(name string) *Value {
+	lv := e.state.GetGlobal(name)
+
+	return newValue(lv)
+}
+
 // SetField applies the value to the given table associated with the given
 // key.
 func (e *Engine) SetField(tbl *Value, key string, val interface{}) {
