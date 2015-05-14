@@ -1,9 +1,9 @@
-package engine
+package lua
 
 import (
 	"fmt"
 
-	"github.com/yuin/gopher-lua"
+	glua "github.com/yuin/gopher-lua"
 )
 
 // Provides information about failed Value typecasts.
@@ -23,11 +23,11 @@ func (v ValueError) Error() string {
 // Value is a utility wrapper for lua.LValue that provies conveinient methods
 // for casting.
 type Value struct {
-	lval lua.LValue
+	lval glua.LValue
 }
 
 // newValue constructs a new value from an LValue.
-func newValue(val lua.LValue) *Value {
+func newValue(val glua.LValue) *Value {
 	return &Value{
 		lval: val,
 	}
@@ -40,14 +40,14 @@ func (v *Value) String() string {
 
 // AsString returns the LValue as a Go string
 func (v *Value) AsString() string {
-	return lua.LVAsString(v.lval)
+	return glua.LVAsString(v.lval)
 }
 
 // AsFloat returns the LValue as a Go float64.
 // This method will try to convert the Lua value to a number if possible, if
 // not then LuaNumber(0) is returned.
 func (v *Value) AsFloat() float64 {
-	return float64(lua.LVAsNumber(v.lval))
+	return float64(glua.LVAsNumber(v.lval))
 }
 
 // AsNumber is an alias for AsFloat (Lua calls them "numbers")
@@ -58,18 +58,18 @@ func (v *Value) AsNumber() float64 {
 // AsBool returns the Lua boolean representation for an object (this works for
 // non bool Values)
 func (v *Value) AsBool() bool {
-	return lua.LVAsBool(v.lval)
+	return glua.LVAsBool(v.lval)
 }
 
 // IsNil will only return true if the Value wraps LNil.
 func (v *Value) IsNil() bool {
-	return v.lval.Type() == lua.LTNil
+	return v.lval.Type() == glua.LTNil
 }
 
 // IsFalse is similar to AsBool except it returns if the Lua value would be
 // considered false in Lua.
 func (v *Value) IsFalse() bool {
-	return lua.LVIsFalse(v.lval)
+	return glua.LVIsFalse(v.lval)
 }
 
 // IsTrue returns whether or not this is a truthy value or not.
@@ -81,51 +81,51 @@ func (v *Value) IsTrue() bool {
 
 // IsNumber returns true if the stored value is a numeric value.
 func (v *Value) IsNumber() bool {
-	return v.lval.Type() == lua.LTNumber
+	return v.lval.Type() == glua.LTNumber
 }
 
 // IsBool returns true if the stored value is a boolean value.
 func (v *Value) IsBool() bool {
-	return v.lval.Type() == lua.LTBool
+	return v.lval.Type() == glua.LTBool
 }
 
 // IsFunction returns true if the stored value is a function.
 func (v *Value) IsFunction() bool {
-	return v.lval.Type() == lua.LTFunction
+	return v.lval.Type() == glua.LTFunction
 }
 
 // IsString returns true if the stored value is a string.
 func (v *Value) IsString() bool {
-	return v.lval.Type() == lua.LTString
+	return v.lval.Type() == glua.LTString
 }
 
 // IsTable returns true if the stored value is a table.
 func (v *Value) IsTable() bool {
-	return v.lval.Type() == lua.LTTable
+	return v.lval.Type() == glua.LTTable
 }
 
 // The following methods allow LTable values to be modified through Go.
 
 // isTable returns a bool if the Value is an LTable.
 func (v *Value) isTable() bool {
-	return v.lval.Type() == lua.LTTable
+	return v.lval.Type() == glua.LTTable
 }
 
 // asTable converts the Value into an LTable.
-func (v *Value) asTable() (t *lua.LTable) {
-	t, _ = v.lval.(*lua.LTable)
+func (v *Value) asTable() (t *glua.LTable) {
+	t, _ = v.lval.(*glua.LTable)
 
 	return
 }
 
 // isUserData returns a bool if the Value is an LUserData
 func (v *Value) isUserData() bool {
-	return v.lval.Type() == lua.LTUserData
+	return v.lval.Type() == glua.LTUserData
 }
 
 // asUserData converts the Value into an LUserData
-func (v *Value) asUserData() (t *lua.LUserData) {
-	t, _ = v.lval.(*lua.LUserData)
+func (v *Value) asUserData() (t *glua.LUserData) {
+	t, _ = v.lval.(*glua.LUserData)
 
 	return
 }
@@ -141,7 +141,7 @@ func (v *Value) Append(value *Value) {
 // TableForEach maps to lua.LTable.ForEach
 func (v *Value) ForEach(cb func(*Value, *Value)) {
 	if v.isTable() {
-		actualCb := func(key lua.LValue, val lua.LValue) {
+		actualCb := func(key glua.LValue, val glua.LValue) {
 			cb(newValue(key), newValue(val))
 		}
 		t := v.asTable()
@@ -203,6 +203,8 @@ func (v *Value) Remove(pos int) *Value {
 	return LuaNil()
 }
 
+// The following provde methods for LUserData
+
 // Interface returns the value of the LUserData
 func (v *Value) Interface() interface{} {
 	if v.isUserData() {
@@ -219,7 +221,7 @@ func (v *Value) Interface() interface{} {
 // FuncLocalName is a function that returns the local name of a LFunction type
 // if this Value objects holds an LFunction.
 func (v *Value) FuncLocalName(regno, pc int) (string, bool) {
-	if f, ok := v.lval.(*lua.LFunction); ok {
+	if f, ok := v.lval.(*glua.LFunction); ok {
 		return f.LocalName(regno, pc)
 	} else {
 		return "", false

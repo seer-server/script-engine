@@ -1,4 +1,4 @@
-package engine
+package lua
 
 import (
 	"testing"
@@ -210,7 +210,7 @@ func Test_EngineValueFor(t *testing.T) {
 func Test_TypeConstructor(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
-	e.DefineType("Song", Song{})
+	e.RegisterType("Song", Song{})
 	e.LoadString(`
 		local s = Song()
 	    s.Title = "Some Song Name"

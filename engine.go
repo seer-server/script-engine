@@ -1,15 +1,15 @@
 // Copyright (c) 2015 tree-server contributors
 
-package engine
+package lua
 
 import (
 	"github.com/layeh/gopher-luar"
-	"github.com/yuin/gopher-lua"
+	glua "github.com/yuin/gopher-lua"
 )
 
-// Engine struct stores a pointer to a lua.LState providing a simplified API.
+// Engine struct stores a pointer to a gluaLState providing a simplified API.
 type Engine struct {
-	state *lua.LState
+	state *glua.LState
 }
 
 // ScriptFunction is a type alias for a function that receives an Engine and
@@ -22,7 +22,7 @@ type ScriptFnMap map[string]ScriptFunction
 // Create a new engine containing a new lua.LState.
 func NewEngine() *Engine {
 	return &Engine{
-		state: lua.NewState(),
+		state: glua.NewState(),
 	}
 }
 
@@ -65,7 +65,7 @@ func (e *Engine) SetField(tbl *Value, key string, val interface{}) {
 // RegisterFunc registers a Go function with the script. Using this method makes
 // Go functions accessible through Lua scripts.
 func (e *Engine) RegisterFunc(name string, fn interface{}) {
-	var lfn lua.LValue
+	var lfn glua.LValue
 	if sf, ok := fn.(func(*Engine) int); ok {
 		lfn = e.genScriptFunc(sf)
 	} else {
@@ -77,7 +77,7 @@ func (e *Engine) RegisterFunc(name string, fn interface{}) {
 
 // RegisterModule registers a Go module with the Engine for use within Lua.
 func (e *Engine) RegisterModule(name string, loadFn func(*Engine) *Value) {
-	loader := func(l *lua.LState) int {
+	loader := func(l *glua.LState) int {
 		e := &Engine{l}
 		mod := loadFn(e)
 		e.PushRet(mod)
@@ -92,7 +92,7 @@ func (e *Engine) RegisterModule(name string, loadFn func(*Engine) *Value) {
 // function map.
 func (e *Engine) GenerateModule(fnMap ScriptFnMap) *Value {
 	tbl := e.state.NewTable()
-	realFnMap := make(map[string]lua.LGFunction)
+	realFnMap := make(map[string]glua.LGFunction)
 	for k, fn := range fnMap {
 		realFnMap[k] = e.wrapScriptFunction(fn)
 	}
@@ -188,13 +188,13 @@ func (e *Engine) PopInterface() interface{} {
 // called should return. These values will be returned in a slice of Value
 // pointers.
 func (e *Engine) Call(name string, retCount int, params ...interface{}) ([]*Value, error) {
-	luaParams := make([]lua.LValue, len(params))
+	luaParams := make([]glua.LValue, len(params))
 	for i, iface := range params {
 		v := e.ValueFor(iface)
 		luaParams[i] = v.lval
 	}
 
-	err := e.state.CallByParam(lua.P{
+	err := e.state.CallByParam(glua.P{
 		Fn:      e.state.GetGlobal(name),
 		NRet:    retCount,
 		Protect: true,
@@ -215,7 +215,7 @@ func (e *Engine) Call(name string, retCount int, params ...interface{}) ([]*Valu
 
 // DefineType creates a construtor with the given name that will generate the
 // given type.
-func (e *Engine) DefineType(name string, val interface{}) {
+func (e *Engine) RegisterType(name string, val interface{}) {
 	cons := luar.NewType(e.state, val)
 	e.state.SetGlobal(name, cons)
 }
@@ -229,14 +229,14 @@ func (e *Engine) ValueFor(val interface{}) *Value {
 	}
 }
 
-// LuaTable creates and returns a new LuaTable.
-func (e *Engine) LuaTable() *Value {
+// NewTable creates and returns a new NewTable.
+func (e *Engine) NewTable() *Value {
 	return newValue(e.state.NewTable())
 }
 
 // wrapScriptFunction turns a ScriptFunction into a lua.LGFunction
-func (e *Engine) wrapScriptFunction(fn ScriptFunction) lua.LGFunction {
-	return func(l *lua.LState) int {
+func (e *Engine) wrapScriptFunction(fn ScriptFunction) glua.LGFunction {
+	return func(l *glua.LState) int {
 		e := &Engine{state: l}
 
 		return fn(e)
@@ -245,6 +245,6 @@ func (e *Engine) wrapScriptFunction(fn ScriptFunction) lua.LGFunction {
 
 // genScriptFunc will wrap a ScriptFunction with a function that gopher-lua
 // expects to see when calling method from Lua.
-func (e *Engine) genScriptFunc(fn ScriptFunction) *lua.LFunction {
+func (e *Engine) genScriptFunc(fn ScriptFunction) *glua.LFunction {
 	return e.state.NewFunction(e.wrapScriptFunction(fn))
 }

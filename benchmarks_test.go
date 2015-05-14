@@ -1,9 +1,9 @@
-package engine
+package lua
 
 import (
 	"testing"
 
-	"github.com/yuin/gopher-lua"
+	glua "github.com/yuin/gopher-lua"
 )
 
 var (
@@ -44,18 +44,18 @@ func Benchmark_EngineFib5(b *testing.B) {
 func Benchmark_RawGopherLuaFib5(b *testing.B) {
 	fibValue := 5
 	for i := 0; i < b.N; i++ {
-		L := lua.NewState()
+		L := glua.NewState()
 		defer L.Close()
 		L.DoString(fibCode)
-		lnum := lua.LNumber(fibValue)
-		L.CallByParam(lua.P{
+		lnum := glua.LNumber(fibValue)
+		L.CallByParam(glua.P{
 			Fn:      L.GetGlobal("call_fib"),
 			NRet:    1,
 			Protect: true,
 		}, lnum)
 		ret := L.Get(-1)
 		L.Pop(1)
-		_ = lua.LVAsNumber(ret)
+		_ = glua.LVAsNumber(ret)
 	}
 }
 
@@ -73,18 +73,18 @@ func Benchmark_EngineFib30(b *testing.B) {
 func Benchmark_RawGopherLuaFib30(b *testing.B) {
 	fibValue := 30
 	for i := 0; i < b.N; i++ {
-		L := lua.NewState()
+		L := glua.NewState()
 		defer L.Close()
 		L.DoString(fibCode)
-		lnum := lua.LNumber(fibValue)
-		L.CallByParam(lua.P{
+		lnum := glua.LNumber(fibValue)
+		L.CallByParam(glua.P{
 			Fn:      L.GetGlobal("call_fib"),
 			NRet:    1,
 			Protect: true,
 		}, lnum)
 		ret := L.Get(-1)
 		L.Pop(1)
-		_ = lua.LVAsNumber(ret)
+		_ = glua.LVAsNumber(ret)
 	}
 }
 
@@ -102,19 +102,19 @@ func Benchmark_EngineAdd(b *testing.B) {
 func Benchmark_RawGopherLuaAdd(b *testing.B) {
 	a, c := 1870183.0, 109899.0
 	for i := 0; i < b.N; i++ {
-		L := lua.NewState()
+		L := glua.NewState()
 		defer L.Close()
 		L.DoString(addCode)
-		la := lua.LNumber(a)
-		lc := lua.LNumber(c)
-		L.CallByParam(lua.P{
+		la := glua.LNumber(a)
+		lc := glua.LNumber(c)
+		L.CallByParam(glua.P{
 			Fn:      L.GetGlobal("call_add"),
 			NRet:    1,
 			Protect: true,
 		}, la, lc)
 		ret := L.Get(-1)
 		L.Pop(1)
-		_ = lua.LVAsNumber(ret)
+		_ = glua.LVAsNumber(ret)
 	}
 }
 
@@ -132,20 +132,20 @@ func Benchmark_EngineGoToLua(b *testing.B) {
 
 func Benchmark_GopherLuaGoToLua(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		L := lua.NewState()
+		L := glua.NewState()
 		defer L.Close()
-		L.SetGlobal("add", L.NewFunction(func(l *lua.LState) int {
+		L.SetGlobal("add", L.NewFunction(func(l *glua.LState) int {
 			la := l.ToNumber(-2)
 			lb := l.ToNumber(-1)
 			l.Pop(2)
 
 			a, b := float64(la), float64(lb)
-			L.Push(lua.LNumber(a + b))
+			L.Push(glua.LNumber(a + b))
 
 			return 1
 		}))
 		L.DoString("num = add(1, 2)")
 		ln := L.GetGlobal("num")
-		_ = float64(lua.LVAsNumber(ln))
+		_ = float64(glua.LVAsNumber(ln))
 	}
 }
