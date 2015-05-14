@@ -117,3 +117,35 @@ func Benchmark_RawGopherLuaAdd(b *testing.B) {
 		_ = lua.LVAsNumber(ret)
 	}
 }
+
+func Benchmark_EngineGoToLua(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		e := NewEngine()
+		defer e.Close()
+		e.RegisterFunc("add", func(a, b float64) float64 {
+			return a + b
+		})
+		e.LoadString("num = add(1, 2)")
+		_ = e.GetGlobal("num").AsNumber()
+	}
+}
+
+func Benchmark_GopherLuaGoToLua(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		L := lua.NewState()
+		defer L.Close()
+		L.SetGlobal("add", L.NewFunction(func(l *lua.LState) int {
+			la := l.ToNumber(-2)
+			lb := l.ToNumber(-1)
+			l.Pop(2)
+
+			a, b := float64(la), float64(lb)
+			L.Push(lua.LNumber(a + b))
+
+			return 1
+		}))
+		L.DoString("num = add(1, 2)")
+		ln := L.GetGlobal("num")
+		_ = float64(lua.LVAsNumber(ln))
+	}
+}
