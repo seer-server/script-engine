@@ -107,9 +107,11 @@ fmt.Println(ret[0].AsString()) // => Brandon (28)
 
 I have to thank [Yusuke Inuzuka](http://github.com/yuin) for making one of my absolute favority Go -> Lua libraries that are currently avialable. It's easy to understand, pure Go and is generally just a pleasure to work with.
 
+I also thank [layeh](http://github.com/layeh) (organization) for their development on gopher-luar which has boosted the simplicity and capabilites of this engine significantly.
+
 # Contributors
 
-Brandon Buck
+[Brandon Buck](http://github.com/bbuck)
 
 # License
 
