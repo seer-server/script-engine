@@ -3,6 +3,7 @@ package lua
 import (
 	"fmt"
 
+	"github.com/layeh/gopher-luar"
 	glua "github.com/yuin/gopher-lua"
 )
 
@@ -23,7 +24,8 @@ func (v ValueError) Error() string {
 // Value is a utility wrapper for lua.LValue that provies conveinient methods
 // for casting.
 type Value struct {
-	lval glua.LValue
+	lval  glua.LValue
+	owner *Engine
 }
 
 // newValue constructs a new value from an LValue.
@@ -201,6 +203,44 @@ func (v *Value) Remove(pos int) *Value {
 	}
 
 	return LuaNil()
+}
+
+// Helper method for Set and RawSet
+func getLValue(e *Engine, item interface{}) glua.LValue {
+	switch val := item.(type) {
+	case (*Value):
+		return val.lval
+	case glua.LValue:
+		return val
+	}
+
+	if e != nil {
+		return luar.New(e.state, item)
+	} else {
+		return glua.LNil
+	}
+}
+
+// Set sets the value of a given key on the table, this method checks for
+// validity of array keys and handles them accordingly.
+func (v *Value) Set(goKey interface{}, val interface{}) {
+	if v.isTable() {
+		key := getLValue(v.owner, goKey)
+		lval := getLValue(v.owner, val)
+
+		v.asTable().RawSet(key, lval)
+	}
+}
+
+// RawSet bypasses any checks for key existence and sets the value onto the
+// table with the given key.
+func (v *Value) RawSet(goKey interface{}, val interface{}) {
+	if v.isTable() {
+		key := getLValue(v.owner, goKey)
+		lval := getLValue(v.owner, val)
+
+		v.asTable().RawSetH(key, lval)
+	}
 }
 
 // The following provde methods for LUserData

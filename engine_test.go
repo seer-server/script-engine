@@ -100,24 +100,19 @@ func Test_LoadingModules(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
 
-	loader := func(e *Engine) *Value {
-		return e.GenerateModule(ScriptFnMap{
-			"double": func(e *Engine) int {
-				x := e.PopArg().AsNumber()
-				e.PushRet(LuaNumber(x * 2))
+	e.RegisterModule("test_mod", LuaTableMap{
+		"double": func(x float64) float64 {
+			return x * 2
+		},
+		"hello": func(e *Engine) int {
+			name := e.PopArg().AsString()
 
-				return 1
-			},
-			"hello": func(e *Engine) int {
-				name := e.PopArg().AsString()
-				e.PushRet(LuaString("Hello, " + name + "!"))
+			e.PushRet("Hello, " + name + "!")
 
-				return 1
-			},
-		})
-	}
+			return 1
+		},
+	})
 
-	e.RegisterModule("test_mod", loader)
 	err := e.LoadString(`
 		local test = require("test_mod")
 
@@ -134,7 +129,7 @@ func Test_LoadingModules(t *testing.T) {
 		return
 	}
 
-	ret, err := e.Call("test_double", 1, LuaNumber(10))
+	ret, err := e.Call("test_double", 1, 10)
 	if err != nil {
 		t.Error(err)
 
@@ -149,7 +144,7 @@ func Test_LoadingModules(t *testing.T) {
 		return
 	}
 
-	ret, err = e.Call("test_hello", 1, LuaString("World"))
+	ret, err = e.Call("test_hello", 1, "World")
 	if err != nil {
 		t.Error(err)
 
@@ -279,7 +274,7 @@ func Test_NonScriptFunctionsPassedToLua(t *testing.T) {
 func Test_StructFunctions(t *testing.T) {
 	e := NewEngine()
 	defer e.Close()
-	e.DefineType("Song", Song{})
+	e.RegisterType("Song", Song{})
 	e.LoadString(`
 		function call_string(s)
 		  local s = Song()

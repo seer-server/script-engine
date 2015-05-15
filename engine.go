@@ -16,8 +16,9 @@ type Engine struct {
 // returns an int.
 type ScriptFunction func(*Engine) int
 
-// ScriptFnMap is a type alias for map[string]ScriptFunction
-type ScriptFnMap map[string]ScriptFunction
+// LuaTableMap interface to speed along the creation of table defining maps
+// when creating Go modueles for use in Lua.
+type LuaTableMap map[string]interface{}
 
 // Create a new engine containing a new lua.LState.
 func NewEngine() *Engine {
@@ -75,32 +76,54 @@ func (e *Engine) RegisterFunc(name string, fn interface{}) {
 	e.state.SetGlobal(name, lfn)
 }
 
-// RegisterModule registers a Go module with the Engine for use within Lua.
-func (e *Engine) RegisterModule(name string, loadFn func(*Engine) *Value) {
+// RegisterModule takes the values given, maps them to a LuaTable and then
+// preloads the module with the given name to be consumed in Lua code.
+func (e *Engine) RegisterModule(name string, fields map[string]interface{}) *Value {
+	table := e.NewTable()
+	for key, val := range fields {
+		if sf, ok := val.(func(*Engine) int); ok {
+			table.RawSet(key, e.genScriptFunc(sf))
+		} else {
+			table.RawSet(key, val)
+		}
+	}
+
 	loader := func(l *glua.LState) int {
-		e := &Engine{l}
-		mod := loadFn(e)
-		e.PushRet(mod)
+		l.Push(table.lval)
 
 		return 1
 	}
-
 	e.state.PreloadModule(name, loader)
+
+	return table
 }
 
-// GenerateModule returns a table that has been loaded with the given script
-// function map.
-func (e *Engine) GenerateModule(fnMap ScriptFnMap) *Value {
-	tbl := e.state.NewTable()
-	realFnMap := make(map[string]glua.LGFunction)
-	for k, fn := range fnMap {
-		realFnMap[k] = e.wrapScriptFunction(fn)
-	}
+// // RegisterModule registers a Go module with the Engine for use within Lua.
+// func (e *Engine) RegisterModule(name string, loadFn func(*Engine) *Value) {
+// 	loader := func(l *glua.LState) int {
+// 		e := &Engine{l}
+// 		mod := loadFn(e)
+// 		e.PushRet(mod)
 
-	mod := e.state.SetFuncs(tbl, realFnMap)
+// 		return 1
+// 	}
 
-	return newValue(mod)
-}
+// 	e.state.PreloadModule(name, loader)
+// }
+
+// // GenerateModule returns a table that has been loaded with the given script
+// // function map.
+// func (e *Engine) GenerateModule(fnMap ScriptFnMap) *Value {
+// 	tbl := e.state.NewTable()
+// 	realFnMap := make(map[string]glua.LGFunction)
+// 	for k, fn := range fnMap {
+// 		realFnMap[k] = e.wrapScriptFunction(fn)
+// 	}
+
+// 	mod := e.state.SetFuncs(tbl, realFnMap)
+
+// 	return newValue(mod)
+// }
 
 // PopArg returns the top value on the Lua stack.
 // This method is used to get arguments given to a Go function from a Lua script.
@@ -231,7 +254,10 @@ func (e *Engine) ValueFor(val interface{}) *Value {
 
 // NewTable creates and returns a new NewTable.
 func (e *Engine) NewTable() *Value {
-	return newValue(e.state.NewTable())
+	tbl := newValue(e.state.NewTable())
+	tbl.owner = e
+
+	return tbl
 }
 
 // wrapScriptFunction turns a ScriptFunction into a lua.LGFunction

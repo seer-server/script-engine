@@ -14,7 +14,9 @@ func ExampleEngine() {
 		panic(err)
 	}
 
-	ret, err := e.Call("double_this_number", 1, LuaNumber(10))
+	// Raw values can be passed through to the function. They'll be converted
+	// appropriately.
+	ret, err := e.Call("double_this_number", 1, 10)
 	if err != nil {
 		panic(err)
 	}
@@ -42,31 +44,25 @@ func ExampleEngine_Call_multiple() {
 }
 
 func ExampleEngine_RegisterModule() {
-	fnMap := ScriptFnMap{
-		"double": func(e *Engine) int {
-			i := e.PopArg().AsNumber()
-			e.PushRet(LuaNumber(i * 2))
+	e := NewEngine()
+	defer e.Close()
 
-			return 1
+	e.RegisterModule("example", LuaTableMap{
+		// Using a non-standard function definition to provide concise means
+		"double": func(x float64) float64 {
+			return x * 2
 		},
+		// Using a standard ScriptFunction definition to provide dynamic
+		// capabilities
 		"swap": func(e *Engine) int {
-			a := e.PopArg()
 			b := e.PopArg()
+			a := e.PopArg()
 			e.PushRet(b)
 			e.PushRet(a)
 
 			return 2
 		},
-	}
-
-	loader := func(e *Engine) *Value {
-		return e.GenerateModule(fnMap)
-	}
-
-	e := NewEngine()
-	defer e.Close()
-
-	e.RegisterModule("example", loader)
+	})
 	e.LoadString(`
 		local e = require("example")
 
