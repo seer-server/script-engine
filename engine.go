@@ -98,33 +98,6 @@ func (e *Engine) RegisterModule(name string, fields map[string]interface{}) *Val
 	return table
 }
 
-// // RegisterModule registers a Go module with the Engine for use within Lua.
-// func (e *Engine) RegisterModule(name string, loadFn func(*Engine) *Value) {
-// 	loader := func(l *glua.LState) int {
-// 		e := &Engine{l}
-// 		mod := loadFn(e)
-// 		e.PushRet(mod)
-
-// 		return 1
-// 	}
-
-// 	e.state.PreloadModule(name, loader)
-// }
-
-// // GenerateModule returns a table that has been loaded with the given script
-// // function map.
-// func (e *Engine) GenerateModule(fnMap ScriptFnMap) *Value {
-// 	tbl := e.state.NewTable()
-// 	realFnMap := make(map[string]glua.LGFunction)
-// 	for k, fn := range fnMap {
-// 		realFnMap[k] = e.wrapScriptFunction(fn)
-// 	}
-
-// 	mod := e.state.SetFuncs(tbl, realFnMap)
-
-// 	return newValue(mod)
-// }
-
 // PopArg returns the top value on the Lua stack.
 // This method is used to get arguments given to a Go function from a Lua script.
 // This method will return a Value pointer that can then be converted into
