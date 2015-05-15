@@ -252,7 +252,7 @@ func (e *Engine) RegisterType(name string, val interface{}) {
 
 // RegisterClass assigns a new type, but instead of creating it via "TypeName()"
 // it provides a more OO way of creating the object "TypeName.new()" otherwise
-// it's functinoally equivalent to RegisterType.
+// it's functionally equivalent to RegisterType.
 func (e *Engine) RegisterClass(name string, val interface{}) {
 	cons := luar.NewType(e.state, val)
 	table := e.NewTable()
