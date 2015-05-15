@@ -132,8 +132,12 @@ func (e *Engine) RegisterModule(name string, fields map[string]interface{}) *Val
 func (e *Engine) PopArg() *Value {
 	lv := e.state.Get(-1)
 	e.state.Pop(1)
+	val := newValue(lv)
+	if val.isTable() {
+		val.owner = e
+	}
 
-	return newValue(lv)
+	return val
 }
 
 // PushRet pushes the given Value onto the Lua stack.
@@ -196,7 +200,10 @@ func (e *Engine) PopString() string {
 // PopTable is an alias for PopArg, provided for readability when specifying
 // the desired value from the top of the stack.
 func (e *Engine) PopTable() *Value {
-	return e.PopArg()
+	tbl := e.PopArg()
+	tbl.owner = e
+
+	return tbl
 }
 
 // PopInterface returns the top of the stack as an actual Go interface.
@@ -241,6 +248,27 @@ func (e *Engine) Call(name string, retCount int, params ...interface{}) ([]*Valu
 func (e *Engine) RegisterType(name string, val interface{}) {
 	cons := luar.NewType(e.state, val)
 	e.state.SetGlobal(name, cons)
+}
+
+// RegisterClass assigns a new type, but instead of creating it via "TypeName()"
+// it provides a more OO way of creating the object "TypeName.new()" otherwise
+// it's functinoally equivalent to RegisterType.
+func (e *Engine) RegisterClass(name string, val interface{}) {
+	cons := luar.NewType(e.state, val)
+	table := e.NewTable()
+	table.RawSet("new", cons)
+	e.state.SetGlobal(name, table.lval)
+}
+
+// RegisterClassWithCtor does the same thing as RegisterClass excep the new
+// function is mapped to the constructor passed in.
+func (e *Engine) RegisterClassWithCtor(name string, typ interface{}, cons interface{}) {
+	luar.NewType(e.state, typ)
+	lcons := e.ValueFor(cons)
+	table := e.NewTable()
+	table.RawSet("new", lcons)
+
+	e.state.SetGlobal(name, table.lval)
 }
 
 // ValueFor takes a Go type and creates a lua equivalent Value for it.

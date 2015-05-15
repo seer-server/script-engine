@@ -297,10 +297,72 @@ func Test_StructFunctions(t *testing.T) {
 	}
 }
 
+func Test_RegisterClass(t *testing.T) {
+	e := NewEngine()
+	defer e.Close()
+	e.RegisterClass("Song", Song{})
+	e.LoadString(`
+		function test_song()
+			local s = Song.new()
+
+			s.title = "One"
+			s.artist = "Two"
+
+			return s:string()
+		end
+	`)
+
+	exp := "One - Two"
+	ret, err := e.Call("test_song", 1)
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	got := ret[0].AsString()
+	if exp != got {
+		t.Errorf("Expected %q but got %q", exp, got)
+	}
+}
+
+func Test_RegisterClassWithCons(t *testing.T) {
+	e := NewEngine()
+	defer e.Close()
+	e.RegisterClassWithCtor("Song", Song{}, newSong)
+	e.LoadString(`
+		function test_song()
+			s = Song.new("One", "Two")
+
+			return s:string()
+		end
+	`)
+
+	exp := "One - Two"
+	ret, err := e.Call("test_song", 1)
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	got := ret[0].AsString()
+	if exp != got {
+		t.Errorf("Expected %q but got %q", exp, got)
+	}
+}
+
 // Helper definitions
 
 type Song struct {
 	Title, Artist string
+}
+
+func newSong(title, artist string) *Song {
+	return &Song{
+		Title:  title,
+		Artist: artist,
+	}
 }
 
 func (s Song) String() string {

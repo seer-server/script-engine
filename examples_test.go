@@ -90,3 +90,56 @@ func ExampleEngine_RegisterFunc() {
 	})
 	e.LoadString("power(2, 2) -- 4")
 }
+
+func ExampleEngine_RegisterType() {
+	type Song struct {
+		Artist, Title string
+	}
+
+	e := NewEngine()
+	defer e.Close()
+
+	e.RegisterType("Song", Song{})
+	e.LoadString(`
+		local s = Song() -- create new structs
+
+		s.Artist = "Some artist" -- set values on structs
+		s.title = "Some title" -- keys and methods can be "lowercased"
+	`)
+}
+
+func ExampleEngine_RegisterClass() {
+	type Song struct {
+		Artist, Title string
+	}
+
+	e := NewEngine()
+	defer e.Close()
+
+	e.RegisterClass("Song", Song{})
+	e.LoadString(`
+		local s = Song.new() -- create new structs with a 'new' function
+
+		s.Artist = "Some artist" -- set values on structs
+		s.title = "Some title" -- keys and methods can be "lowercased"
+	`)
+}
+
+func ExampleEngine_RegisterClassWithCtor() {
+	type Song struct {
+		Artist, Title string
+	}
+
+	newSong := func(n, a string) *Song {
+		return &Song{a, n}
+	}
+
+	e := NewEngine()
+	defer e.Close()
+
+	e.RegisterClassWithCtor("Song", Song{}, newSong)
+	e.LoadString(`
+		-- create new structs with custom constructors!
+		local s = Song.new("Some title", "Some artist")
+	`)
+}
