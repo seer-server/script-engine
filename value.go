@@ -132,15 +132,17 @@ func (v *Value) asUserData() (t *glua.LUserData) {
 	return
 }
 
-// TableAppend maps to lua.LTable.Append
-func (v *Value) Append(value *Value) {
+// Append maps to lua.LTable.Append
+func (v *Value) Append(value interface{}) {
 	if v.isTable() {
+		val := getLValue(v.owner, value)
+
 		t := v.asTable()
-		t.Append(value.lval)
+		t.Append(val)
 	}
 }
 
-// TableForEach maps to lua.LTable.ForEach
+// ForEach maps to lua.LTable.ForEach
 func (v *Value) ForEach(cb func(*Value, *Value)) {
 	if v.isTable() {
 		actualCb := func(key glua.LValue, val glua.LValue) {
@@ -151,15 +153,17 @@ func (v *Value) ForEach(cb func(*Value, *Value)) {
 	}
 }
 
-// TableInsert maps to lua.LTable.Insert
-func (v *Value) Insert(i int, value *Value) {
+// Insert maps to lua.LTable.Insert
+func (v *Value) Insert(i int, value interface{}) {
 	if v.isTable() {
+		val := getLValue(v.owner, value)
+
 		t := v.asTable()
-		t.Insert(i, value.lval)
+		t.Insert(i, val)
 	}
 }
 
-// TableLen maps to lua.LTable.Len
+// Len maps to lua.LTable.Len
 func (v *Value) Len() int {
 	if v.isTable() {
 		t := v.asTable()
@@ -170,7 +174,7 @@ func (v *Value) Len() int {
 	return -1
 }
 
-// TableMaxN maps to lua.LTable.MaxN
+// MaxN maps to lua.LTable.MaxN
 func (v *Value) MaxN() int {
 	if v.isTable() {
 		t := v.asTable()
@@ -181,11 +185,13 @@ func (v *Value) MaxN() int {
 	return 0
 }
 
-// TableNext maps to lua.LTable.Next
-func (v *Value) Next(key *Value) (*Value, *Value) {
+// Next maps to lua.LTable.Next
+func (v *Value) Next(key interface{}) (*Value, *Value) {
 	if v.isTable() {
+		val := getLValue(v.owner, key)
+
 		t := v.asTable()
-		v1, v2 := t.Next(key.lval)
+		v1, v2 := t.Next(key)
 
 		return newValue(v1), newValue(v2)
 	}
@@ -193,7 +199,7 @@ func (v *Value) Next(key *Value) (*Value, *Value) {
 	return LuaNil(), LuaNil()
 }
 
-// TableRemove maps to lua.LTable.Remove
+// Remove maps to lua.LTable.Remove
 func (v *Value) Remove(pos int) *Value {
 	if v.isTable() {
 		t := v.asTable()
