@@ -191,7 +191,7 @@ func (v *Value) Next(key interface{}) (*Value, *Value) {
 		val := getLValue(v.owner, key)
 
 		t := v.asTable()
-		v1, v2 := t.Next(key)
+		v1, v2 := t.Next(val)
 
 		return newValue(v1), newValue(v2)
 	}
