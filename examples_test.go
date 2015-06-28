@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-func ExampleEngine() {
+func ExampleNewEngine() {
 	e := NewEngine() // create a new engine
 	defer e.Close()  // make sure to close the engine
 
@@ -25,7 +25,7 @@ func ExampleEngine() {
 	fmt.Println(n) // 20.0000000
 }
 
-func ExampleEngine_secure() {
+func ExampleNewSecureEngine() {
 	e, err := NewSecureEngine()
 	if err != nil {
 		panic(err)
@@ -35,7 +35,7 @@ func ExampleEngine_secure() {
 	e.Call("doSecureWork", 0)
 }
 
-func ExampleEngine_custom_security() {
+func ExampleNewCustomSecureEngine() {
 	sandbox := Sandbox{
 		Script: `
 			__my_secure_env = {
