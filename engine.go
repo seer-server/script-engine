@@ -3,13 +3,32 @@
 package lua
 
 import (
+	"fmt"
+
 	"github.com/layeh/gopher-luar"
 	glua "github.com/yuin/gopher-lua"
 )
 
+// Sandbox provides a way to define a script that loads in a secure environment
+// (specificed by Script) and setting the variable that stores this secure
+// script (EnvName).
+type Sandbox struct {
+	Script, EnvName string
+}
+
+// defaultSandbox is just a constant representative of the default sandbox
+// options.
+var defaultSandbox = Sandbox{
+	Script:  secureSandboxScript,
+	EnvName: defualtSandboxEnvName,
+}
+
 // Engine struct stores a pointer to a gluaLState providing a simplified API.
 type Engine struct {
-	state *glua.LState
+	state      *glua.LState
+	Secure     bool
+	sandbox    Sandbox
+	securedFns map[string]struct{}
 }
 
 // ScriptFunction is a type alias for a function that receives an Engine and
@@ -20,11 +39,49 @@ type ScriptFunction func(*Engine) int
 // when creating Go modueles for use in Lua.
 type LuaTableMap map[string]interface{}
 
-// Create a new engine containing a new lua.LState.
+// NewEngine creates a new engine containing a new lua.LState.
 func NewEngine() *Engine {
 	return &Engine{
-		state: glua.NewState(),
+		state:      glua.NewState(),
+		Secure:     false,
+		sandbox:    defaultSandbox,
+		securedFns: make(map[string]struct{}),
 	}
+}
+
+// NewSecureEngine creates a secure engine that will secure each function before
+// it's called.
+func NewSecureEngine() (*Engine, error) {
+	engine := NewEngine()
+	engine.Secure = true
+	if err := engine.initiateKnockdown(); err != nil {
+		return nil, err
+	}
+
+	return engine, nil
+}
+
+// NewCustomSecureEngine creates a new secure engine with the custom Sandbox
+// provided. This will allow for cusotm security settings.
+func NewCustomSecureEngine(sandbox Sandbox) (*Engine, error) {
+	engine := NewEngine()
+	engine.Secure = true
+	engine.sandbox = sandbox
+	if err := engine.initiateKnockdown(); err != nil {
+		return nil, err
+	}
+
+	return engine, nil
+}
+
+// initiateKnockdown runs the SecureScript of the engine, this allows for custom
+// security settings.
+func (e *Engine) initiateKnockdown() error {
+	if err := e.LoadString(e.sandbox.Script); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Close will perform a close on the Lua state.
@@ -195,6 +252,14 @@ func (e *Engine) Call(name string, retCount int, params ...interface{}) ([]*Valu
 	for i, iface := range params {
 		v := e.ValueFor(iface)
 		luaParams[i] = v.lval
+	}
+
+	if _, ok := e.securedFns[name]; e.Secure && !ok {
+		secureScript := fmt.Sprintf("setfenv(%s, %s)", name, e.sandbox.EnvName)
+		if err := e.LoadString(secureScript); err != nil {
+			return nil, err
+		}
+		e.securedFns[name] = struct{}{}
 	}
 
 	err := e.state.CallByParam(glua.P{

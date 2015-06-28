@@ -352,6 +352,47 @@ func Test_RegisterClassWithCons(t *testing.T) {
 	}
 }
 
+func Test_SecureEnginePreventsAccessToIO(t *testing.T) {
+	e, err := NewSecureEngine()
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+	err = e.LoadString(`
+		function testing()
+		  if io == nil then
+		  	return true
+		  else
+		  	return false
+		  end
+		end
+	`)
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+	retVal, err := e.Call("testing", 1)
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	if len(retVal) != 1 {
+		t.Errorf("Expected %d return value, but found %s", 1, len(retVal))
+
+		return
+	}
+
+	if !(retVal[0].IsBool() && retVal[0].IsTrue()) {
+		t.Errorf("Expected %b but got %v", true, retVal[0])
+
+		return
+	}
+}
+
 // Helper definitions
 
 type Song struct {

@@ -25,6 +25,34 @@ func ExampleEngine() {
 	fmt.Println(n) // 20.0000000
 }
 
+func ExampleEngine_secure() {
+	e, err := NewSecureEngine()
+	if err != nil {
+		panic(err)
+	}
+	defer e.Close()
+
+	e.Call("doSecureWork", 0)
+}
+
+func ExampleEngine_custom_security() {
+	sandbox := Sandbox{
+		Script: `
+			__my_secure_env = {
+				string = string
+			}
+		`,
+		EnvName: "__my_secure_env",
+	}
+	e, err := NewCustomSecureEngine(sandbox)
+	if err != nil {
+		panic(err)
+	}
+	defer e.Close()
+
+	e.Call("doSecureWork", 0)
+}
+
 func ExampleEngine_Call_simple() {
 	e := NewEngine()
 	defer e.Close()
