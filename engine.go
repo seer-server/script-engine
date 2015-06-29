@@ -141,7 +141,7 @@ func (e *Engine) RegisterModule(name string, fields map[string]interface{}) *Val
 		if sf, ok := val.(func(*Engine) int); ok {
 			table.RawSet(key, e.genScriptFunc(sf))
 		} else {
-			table.RawSet(key, val)
+			table.RawSet(key, e.ValueFor(val).lval)
 		}
 	}
 

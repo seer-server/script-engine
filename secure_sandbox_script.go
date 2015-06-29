@@ -3,6 +3,7 @@ package lua
 const (
 	secureSandboxScript = `
 __sandbox_env = {
+  require = require,
   ipairs = ipairs,
   next = next,
   pairs = pairs,
