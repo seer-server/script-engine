@@ -99,7 +99,7 @@ func (e *Engine) LoadString(src string) error {
 	return e.state.DoString(src)
 }
 
-// SetVal allows for setting global variables in the loaded code.
+// SetGlobal allows for setting global variables in the loaded code.
 func (e *Engine) SetGlobal(name string, val interface{}) {
 	v := e.ValueFor(val)
 
@@ -281,7 +281,7 @@ func (e *Engine) Call(name string, retCount int, params ...interface{}) ([]*Valu
 	return retVals, nil
 }
 
-// DefineType creates a construtor with the given name that will generate the
+// RegisterType creates a construtor with the given name that will generate the
 // given type.
 func (e *Engine) RegisterType(name string, val interface{}) {
 	cons := luar.NewType(e.state, val)
@@ -313,9 +313,9 @@ func (e *Engine) RegisterClassWithCtor(name string, typ interface{}, cons interf
 func (e *Engine) ValueFor(val interface{}) *Value {
 	if v, ok := val.(*Value); ok {
 		return v
-	} else {
-		return newValue(luar.New(e.state, val))
 	}
+
+	return newValue(luar.New(e.state, val))
 }
 
 // NewTable creates and returns a new NewTable.

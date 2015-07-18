@@ -7,7 +7,7 @@ import (
 	glua "github.com/yuin/gopher-lua"
 )
 
-// Provides information about failed Value typecasts.
+// ValueError provides information about failed Value typecasts.
 type ValueError string
 
 // newValueError creates a new error explaining failure from a given type to an
@@ -196,7 +196,7 @@ func (v *Value) Next(key interface{}) (*Value, *Value) {
 		return newValue(v1), newValue(v2)
 	}
 
-	return LuaNil(), LuaNil()
+	return Nil, Nil
 }
 
 // Remove maps to lua.LTable.Remove
@@ -208,7 +208,7 @@ func (v *Value) Remove(pos int) *Value {
 		return newValue(ret)
 	}
 
-	return LuaNil()
+	return Nil
 }
 
 // Helper method for Set and RawSet
@@ -222,9 +222,9 @@ func getLValue(e *Engine, item interface{}) glua.LValue {
 
 	if e != nil {
 		return luar.New(e.state, item)
-	} else {
-		return glua.LNil
 	}
+
+	return glua.LNil
 }
 
 // Set sets the value of a given key on the table, this method checks for
@@ -269,7 +269,7 @@ func (v *Value) Interface() interface{} {
 func (v *Value) FuncLocalName(regno, pc int) (string, bool) {
 	if f, ok := v.lval.(*glua.LFunction); ok {
 		return f.LocalName(regno, pc)
-	} else {
-		return "", false
 	}
+
+	return "", false
 }
